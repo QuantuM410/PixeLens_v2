@@ -18,6 +18,8 @@ import css from "react-syntax-highlighter/dist/esm/languages/hljs/css";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Register languages
 SyntaxHighlighter.registerLanguage("javascript", js);
@@ -317,8 +319,8 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
     return nodes.map((node) => (
       <div key={node.id} className="select-none">
         <div
-          className={`flex items-center py-1 px-2 hover:bg-gray-700 rounded cursor-pointer ${
-            selectedFile === node.id ? "bg-blue-600 bg-opacity-40" : ""
+          className={`flex items-center py-1 px-2 rounded cursor-pointer ${
+            selectedFile === node.id ? "bg-primary/20" : "hover:bg-muted"
           }`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => handleFileClick(node.id, node.isDirectory)}
@@ -327,24 +329,24 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
           {node.isDirectory && (
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 toggleNode(node.id, node.isDirectory, node.loaded);
               }}
-              className="mr-1 text-gray-400 hover:text-white"
+              className="mr-1 text-foreground hover:bg-muted"
             >
               {expandedNodes[node.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </Button>
           )}
           {node.isDirectory ? (
             expandedNodes[node.id] ? (
-              <FolderOpen size={16} className="mr-2 text-yellow-400" />
+              <FolderOpen size={16} className="mr-2 text-yellow-500" />
             ) : (
-              <Folder size={16} className="mr-2 text-yellow-400" />
+              <Folder size={16} className="mr-2 text-yellow-500" />
             )
           ) : (
-            <File size={16} className="mr-2 text-blue-400" />
+            <File size={16} className="mr-2 text-blue-500" />
           )}
           <span className="truncate text-sm">{node.name}</span>
         </div>
@@ -357,13 +359,13 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
   };
 
   return (
-    <div
-      className="bg-gray-800 text-white flex flex-col border-r border-gray-700 shadow-lg relative transition-all duration-200 ease-in-out"
+    <Card
+      className="flex flex-col border-r border-border relative transition-all duration-200 ease-in-out bg-background text-foreground rounded-none"
       style={{ width: isCollapsed ? "48px" : `${panelWidth}px` }}
     >
       {!isCollapsed && (
         <div
-          className="absolute top-0 right-0 w-2 h-full bg-gray-600/50 cursor-ew-resize hover:bg-blue-500 transition-colors z-20"
+          className="absolute top-0 right-0 w-2 h-full cursor-ew-resize hover:bg-primary/90 transition-colors z-20"
           onMouseDown={handleResizeStart}
           onTouchStart={handleResizeStart}
         />
@@ -373,46 +375,46 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
         <div className="flex-1 flex items-center justify-center">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={toggleCollapse}
-            className="text-gray-400 hover:text-white"
             title="Expand Workspace"
+            className="text-foreground hover:bg-muted"
           >
             <ChevronRightIcon size={20} />
           </Button>
         </div>
       ) : (
         <>
-          <div className="p-3 border-b border-gray-700 flex justify-between items-center bg-gradient-to-r from-gray-800 to-gray-750">
-            <h2 className="font-semibold">Workspace</h2>
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border">
+            <CardTitle>Workspace</CardTitle>
             <div className="flex items-center space-x-2">
               <Button
                 variant="default"
                 size="sm"
                 onClick={handleSelectProject}
-                className="bg-blue-600 py-1 text-white hover:bg-blue-500"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Open
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={toggleCollapse}
-                className="text-gray-400 hover:text-white"
                 title="Collapse Workspace"
+                className="text-foreground hover:bg-muted"
               >
                 <ChevronLeft size={20} />
               </Button>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="p-2 border-b border-gray-700">
-            <div className="relative">
+          <CardContent className="border-border">
+            <div className="relative p-0 mt-2 align-self-center">
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search files..."
-                className="w-full bg-gray-700 text-white text-sm rounded pl-8 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-sm border-border bg-background text-foreground placeholder:text-muted-foreground"
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
               {isSearching && (
@@ -421,11 +423,11 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                 </div>
               )}
             </div>
-          </div>
+          </CardContent>
 
           {projectPath ? (
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-auto p-1">
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <ScrollArea className="flex-1 p-1">
                 {loading && treeData.length === 0 ? (
                   <div className="flex justify-center items-center h-full">
                     <div className="loader"></div>
@@ -434,7 +436,7 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                   <>
                     {isSearching || searchResults.length > 0 ? (
                       <div className="p-2">
-                        <h3 className="text-sm font-medium mb-2 text-gray-300">Search Results</h3>
+                        <h3 className="text-sm font-medium mb-2 text-muted-foreground">Search Results</h3>
                         {isSearching ? (
                           <div className="flex justify-center py-4">
                             <div className="loader"></div>
@@ -442,19 +444,21 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                         ) : searchResults.length > 0 ? (
                           <div className="space-y-2">
                             {searchResults.map((result, index) => (
-                              <div
+                              <Card
                                 key={index}
-                                className="p-2 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer"
+                                className="p-2 hover:bg-muted cursor-pointer bg-card text-card-foreground"
                                 onClick={() => setSelectedFile(result.path)}
                               >
-                                <div className="text-xs text-blue-400 truncate">{result.path}</div>
-                                <div className="text-xs text-gray-400">Line {result.line}</div>
-                                <div className="text-sm font-mono mt-1 truncate">{result.preview}</div>
-                              </div>
+                                <CardContent className="p-0">
+                                  <div className="text-xs text-primary truncate">{result.path}</div>
+                                  <div className="text-xs text-muted-foreground">Line {result.line}</div>
+                                  <div className="text-sm font-mono mt-1 truncate">{result.preview}</div>
+                                </CardContent>
+                              </Card>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-400">No results found.</div>
+                          <div className="text-sm text-muted-foreground">No results found.</div>
                         )}
                       </div>
                     ) : (
@@ -462,20 +466,20 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                     )}
                   </>
                 )}
-              </div>
+              </ScrollArea>
 
               {selectedFile && (
-                <div className="h-2/5 border-t border-gray-700 overflow-hidden flex flex-col">
-                  <div className="p-2 bg-gray-700 text-sm font-medium flex justify-between items-center">
+                <div className="h-2/5 border-t border-border overflow-hidden flex flex-col">
+                  <div className="p-2 bg-muted text-sm font-medium flex justify-between items-center">
                     <div className="truncate flex-1">{selectedFile.split("/").pop() || selectedFile.split("\\").pop()}</div>
                     <div className="flex space-x-1">
                       {!editMode ? (
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => setEditMode(true)}
-                          className="text-gray-400 hover:text-white"
                           title="Edit file"
+                          className="text-foreground hover:bg-background"
                         >
                           <Edit size={14} />
                         </Button>
@@ -483,22 +487,22 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                         <>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={handleSaveFile}
-                            className="text-green-400 hover:text-green-300"
                             title="Save changes"
+                            className="text-foreground hover:bg-background"
                           >
                             <Save size={14} />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => {
                               setEditMode(false);
                               setEditedContent(fileContent || "");
                             }}
-                            className="text-gray-400 hover:text-white"
                             title="Cancel editing"
+                            className="text-foreground hover:bg-background"
                           >
                             <X size={14} />
                           </Button>
@@ -506,64 +510,47 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                       )}
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={handleCloseFile}
-                        className="text-gray-400 hover:text-white"
                         title="Close file"
+                        className="text-foreground hover:bg-background"
                       >
                         <X size={14} />
                       </Button>
                     </div>
                   </div>
-
-                  {loading ? (
-                    <div className="flex-1 flex justify-center items-center">
-                      <div className="loader"></div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 overflow-auto">
-                      {editMode ? (
-                        <div
-                          contentEditable={true}
-                          onInput={(e) => setEditedContent(e.currentTarget.textContent || "")}
-                          className="w-full h-full bg-gray-900 text-white p-4 text-sm font-mono focus:outline-none whitespace-pre-wrap"
-                          style={{ lineHeight: "1.5", tabSize: 2 }}
-                          suppressContentEditableWarning={true}
-                        >
-                          {editedContent || ""}
-                        </div>
-                      ) : (
-                        <SyntaxHighlighter
-                          language={getFileLanguage(selectedFile)}
-                          style={atomOneDark}
-                          customStyle={{ margin: 0, padding: "1rem", height: "100%", lineHeight: "1.5", tabSize: 2 }}
-                          className="text-sm"
-                        >
-                          {fileContent || ""}
-                        </SyntaxHighlighter>
-                      )}
-                    </div>
-                  )}
+                  <ScrollArea className="flex-1 bg-background text-foreground">
+                    {editMode ? (
+                      <textarea
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        className="w-full h-full p-2 font-mono text-sm border-none outline-none resize-none bg-background text-foreground"
+                      />
+                    ) : fileContent ? (
+                      <SyntaxHighlighter
+                        language={getFileLanguage(selectedFile)}
+                        style={atomOneDark}
+                        className="p-2 rounded-none text-sm bg-background text-foreground"
+                        customStyle={{ margin: 0 }}
+                      >
+                        {fileContent}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <div className="p-2 text-muted-foreground">Unable to load file content.</div>
+                    )}
+                  </ScrollArea>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
-              <div className="text-center p-6">
-                <Folder size={48} className="mx-auto mb-4 text-gray-500" />
-                <p className="mb-4">No project opened</p>
-                <Button
-                  variant="default"
-                  onClick={handleSelectProject}
-                  className="bg-blue-600 text-white hover:bg-blue-500"
-                >
-                  Open Project
-                </Button>
-              </div>
+            <div className="flex-1 flex items-center justify-center">
+              <Button onClick={handleSelectProject} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Open Project
+              </Button>
             </div>
           )}
         </>
       )}
-    </div>
+    </Card>
   );
 };

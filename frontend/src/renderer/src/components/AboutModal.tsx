@@ -1,4 +1,11 @@
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface AboutModalProps {
   onClose: () => void;
@@ -6,37 +13,32 @@ interface AboutModalProps {
 
 export const AboutModal: React.FC<AboutModalProps> = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg shadow-lg w-80 max-w-full">
-        <div className="flex justify-between items-center p-4 border-b border-gray-700">
-          <h2 className="font-semibold text-white">About PixeLens</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px] bg-background text-foreground">
+        <DialogHeader>
+          <DialogTitle>About PixeLens</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
           <div className="text-center">
-            <h3 className="text-lg font-medium text-white">PixeLens</h3>
-            <p className="text-sm text-gray-400">Version 1.0.0</p>
+            <h3 className="text-lg font-medium">PixeLens</h3>
+            <p className="text-sm text-muted-foreground">Version 1.0.0</p>
           </div>
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-muted-foreground">
             PixeLens is a UI debugging assistant designed to help developers identify and fix issues in their applications. It provides tools for accessibility checks, performance optimization, and styling consistency.
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Built with Electron, React, and TypeScript.
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             © 2025 PixeLens. All rights reserved.
           </p>
         </div>
-
-        <div className="p-4 border-t border-gray-700 flex justify-end">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">
+        <DialogFooter>
+          <Button onClick={onClose} className="bg-primary text-primary-foreground hover:bg-primary/90">
             Close
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

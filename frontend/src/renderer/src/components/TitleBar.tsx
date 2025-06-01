@@ -1,4 +1,4 @@
-import { X, Minus, Square, Settings, Info } from "lucide-react";
+import { X, Minus, Square, Settings, Info, ScanEyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TitleBarProps {
@@ -20,12 +20,13 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenSettings, onShowAbout 
   };
 
   return (
-    <div className="h-10 bg-gray-900 flex items-center justify-between px-2 select-none drag">
+    <div className="h-10 bg-background flex items-center justify-between px-2 select-none drag">
       <div className="flex items-center">
-        <span className="text-white font-semibold text-lg">PixeLens</span>
+        <ScanEyeIcon className="text-foreground mr-2" size={24} />
+        <span className="text-foreground font-semibold text-lg">PixeLens</span>
       </div>
 
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center">
         <Button
           variant="ghost"
           size="sm"
@@ -33,7 +34,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenSettings, onShowAbout 
             console.log("Settings button clicked");
             onOpenSettings();
           }}
-          className="text-gray-400 hover:text-white pointer-events-auto"
+          className="text-foreground hover:bg-muted pointer-events-auto"
           title="Open Settings"
         >
           <Settings size={16} />
@@ -45,7 +46,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenSettings, onShowAbout 
             console.log("About button clicked");
             onShowAbout();
           }}
-          className="text-gray-400 hover:text-white pointer-events-auto"
+          className="text-foreground hover:bg-muted pointer-events-auto"
           title="About PixeLens"
         >
           <Info size={16} />
@@ -54,7 +55,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenSettings, onShowAbout 
           variant="ghost"
           size="sm"
           onClick={handleMinimize}
-          className="text-gray-400 hover:text-white pointer-events-auto"
+          className="text-foreground hover:bg-muted pointer-events-auto"
         >
           <Minus size={16} />
         </Button>
@@ -62,15 +63,15 @@ export const TitleBar: React.FC<TitleBarProps> = ({ onOpenSettings, onShowAbout 
           variant="ghost"
           size="sm"
           onClick={handleMaximize}
-          className="text-gray-400 hover:text-white pointer-events-auto"
+          className="text-foreground hover:bg-muted pointer-events-auto"
         >
-          <Square size={13} />
+          <Square size={11} />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleClose}
-          className="text-gray-400 hover:text-white pointer-events-auto"
+          className="text-foreground hover:bg-muted pointer-events-auto"
         >
           <X size={16} />
         </Button>

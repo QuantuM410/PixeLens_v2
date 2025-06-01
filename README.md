@@ -7,20 +7,20 @@ An Electron application with React and TypeScript
 ### Virtual env
 
 ```bash
-$ python3 -m venv venv
-$ source venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 ### Install dependencies
 
 ```bash
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Install node environment
 
 ```bash
-$ nodeenv -p --node=22.13.0
+nodeenv -p --node=22.13.0
 ```
 
 **Note:**
@@ -30,5 +30,5 @@ $ nodeenv -p --node=22.13.0
 ### Install
 
 ```bash
-$ npm install
+npm install
 ```

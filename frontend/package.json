@@ -71,7 +71,8 @@
     "sqlite3": "latest",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.6",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vite-plugin-svgr": "^4.3.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
