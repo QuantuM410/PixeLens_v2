@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 SyntaxHighlighter.registerLanguage("javascript", js);
 SyntaxHighlighter.registerLanguage("html", html);
@@ -51,6 +53,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
   const startHeight = useRef<number>(chatPanelHeight);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  //@ts-ignore
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -176,12 +179,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
 
               return (
                 <div key={index} className="my-2 relative rounded-md overflow-hidden">
-                  <div className="bg-gray-900 text-gray-400 text-xs py-1 px-3 flex justify-between items-center">
+                  <div className="bg-muted text-muted-foreground text-xs py-1 px-3 flex justify-between items-center">
                     <span>{language}</span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-primary hover:text-primary-foreground"
                       onClick={() => navigator.clipboard.writeText(code)}
                     >
                       Copy
@@ -190,7 +193,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
                   <SyntaxHighlighter
                     language={language}
                     style={atomOneDark}
-                    className="rounded-b-md text-sm"
+                    className="rounded-b-md text-sm bg-background text-foreground"
                     customStyle={{ margin: 0 }}
                   >
                     {code}
@@ -198,7 +201,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
                   <Button
                     variant="default"
                     size="sm"
-                    className="absolute top-8 right-2 bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-500"
+                    className="absolute top-8 right-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
                     onClick={() => console.log("Apply code:", code)}
                   >
                     Apply
@@ -215,106 +218,108 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
   };
 
   return (
-    <div
-      className={`flex flex-col bg-gray-900 border-t border-gray-700 relative transition-all duration-200 ease-in-out ${
-        isExpanded ? "fixed inset-0 z-50" : "h-full"
-      }`}
+    <Card
+      className={`flex flex-col relative border-t border-border ${isExpanded ? "fixed inset-0 z-50" : "h-full"} bg-background text-foreground rounded-none`}
       style={{ height: isExpanded ? "100%" : `${chatPanelHeight}px` }}
     >
       {!isExpanded && (
         <div
-          className="absolute top-0 left-0 right-0 h-2 bg-gray-600/50 cursor-ns-resize hover:bg-blue-500 transition-colors z-20"
+          className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-primary/90 transition-colors z-20"
           onMouseDown={handleResizeStart}
           onTouchStart={handleResizeStart}
         />
       )}
 
-      <div className="flex justify-between items-center p-3 border-b border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800">
-        <h2 className="font-semibold text-white flex items-center">
-          <Sparkles size={16} className="mr-2 text-blue-400" />
+      <CardHeader className="flex flex-row items-center justify-between border-b border-border">
+        <CardTitle className="flex items-center text-base">
+          <Sparkles size={16} className="mr-2 text-primary" />
           Chat
-        </h2>
+        </CardTitle>
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700"
             title={isExpanded ? "Minimize" : "Maximize"}
+            className="text-foreground hover:bg-muted"
           >
             {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={handleClearHistory}
-            className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700"
             title="Clear History"
+            className="text-foreground hover:bg-muted"
           >
             <X size={16} />
           </Button>
         </div>
-      </div>
+      </CardHeader>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatContainerRef}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.map((message) => (
             <div
-              className={`max-w-[80%] p-3 rounded-lg ${
-                message.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-white"
-              }`}
+              key={message.id}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {renderMessageContent(message.content)}
-              <div className="flex items-center mt-2 space-x-2">
-                <span className="text-xs text-gray-400">
-                  {message.timestamp.toLocaleTimeString()}
-                </span>
-                {message.role === "assistant" && (
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(message.id, "thumbs-up")}
-                      className="text-gray-400 hover:text-green-400 p-1"
-                    >
-                      <ThumbsUp size={14} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(message.id, "thumbs-down")}
-                      className="text-gray-400 hover:text-red-400 p-1"
-                    >
-                      <ThumbsDown size={14} />
-                    </Button>
+              <Card
+                className={`max-w-[80%] p-3 ${
+                  message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card text-card-foreground"
+                }`}
+              >
+                <CardContent className="p-0">
+                  {renderMessageContent(message.content)}
+                  <div className="flex items-center mt-2 space-x-2">
+                    <span className="text-xs text-muted-foreground">
+                      {message.timestamp.toLocaleTimeString()}
+                    </span>
+                    {message.role === "assistant" && (
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleFeedback(message.id, "thumbs-up")}
+                          className="hover:text-green-400"
+                        >
+                          <ThumbsUp size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleFeedback(message.id, "thumbs-down")}
+                          className="hover:text-destructive"
+                        >
+                          <ThumbsDown size={14} />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-700 p-3 rounded-lg">
-              <div className="loader w-6 h-6"></div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <Card className="p-3 bg-card">
+                <CardContent className="p-0">
+                  <div className="loader w-6 h-6"></div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
 
-      <div className="p-3 border-t border-gray-700 bg-gray-800">
+      <CardContent className="p-3 border-t border-border">
         <div className="flex items-center space-x-2 mb-2">
           <Select value={queryType} onValueChange={setQueryType}>
-            <SelectTrigger className="w-40 bg-gray-700 text-white border-gray-600">
+            <SelectTrigger className="w-40 mt-2 border-border">
               <SelectValue placeholder="Query Type" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 text-white border-gray-600">
+            <SelectContent className="bg-background text-foreground">
               <SelectItem value="general">General</SelectItem>
               <SelectItem value="accessibility">Accessibility</SelectItem>
               <SelectItem value="performance">Performance</SelectItem>
@@ -328,18 +333,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask about UI issues, accessibility, or styling..."
-            className="flex-1 bg-gray-700 text-white border-gray-600 focus:ring-blue-500 resize-none"
+            className="flex-1 resize-none border-border bg-background text-foreground placeholder:text-muted-foreground"
             rows={2}
           />
-          <Button
-            onClick={handleSendMessage}
-            className="bg-blue-600 text-white hover:bg-blue-500 p-2 rounded"
-            disabled={isLoading}
-          >
+          <Button onClick={handleSendMessage} disabled={isLoading} className="bg-primary text-primary-foreground hover:bg-primary">
             <Send size={18} />
           </Button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

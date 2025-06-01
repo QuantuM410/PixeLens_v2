@@ -1,6 +1,9 @@
 import { useState, JSX } from "react";
-import { ChevronUp, ChevronDown, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DesignToken {
   name: string;
@@ -9,16 +12,15 @@ interface DesignToken {
 }
 
 export const DesignTokensPanel: React.FC = () => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   const tokens: DesignToken[] = [
-    { name: "--primary-color", value: "#3b82f6", type: "color" },
-    { name: "--secondary-color", value: "#10b981", type: "color" },
-    { name: "--accent-color", value: "#8b5cf6", type: "color" },
-    { name: "--text-color", value: "#f9fafb", type: "color" },
-    { name: "--background-color", value: "#1f2937", type: "color" },
-    { name: "--border-radius", value: "4px", type: "other" },
+    { name: "--primary-color", value: "hsl(240 5.9% 10%)", type: "color" },
+    { name: "--secondary-color", value: "hsl(240 4.8% 95.9%)", type: "color" },
+    { name: "--accent-color", value: "hsl(240 4.8% 95.9%)", type: "color" },
+    { name: "--text-color", value: "hsl(0 0% 98%)", type: "color" },
+    { name: "--background-color", value: "hsl(240 10% 3.9%)", type: "color" },
+    { name: "--border-radius", value: "0.5rem", type: "other" },
     { name: "--spacing-sm", value: "8px", type: "spacing" },
     { name: "--spacing-md", value: "16px", type: "spacing" },
     { name: "--spacing-lg", value: "24px", type: "spacing" },
@@ -35,48 +37,48 @@ export const DesignTokensPanel: React.FC = () => {
 
   const renderTokenPreview = (token: DesignToken): JSX.Element => {
     if (token.type === "color") {
-      return <div className="w-6 h-6 rounded-full border border-gray-600" style={{ backgroundColor: token.value }} />;
+      return <div className="w-6 h-6 rounded-full border border-border" style={{ backgroundColor: token.value }} />;
     }
-    return <span className="text-xs text-gray-400">{token.value}</span>;
+    return <span className="text-xs text-muted-foreground">{token.value}</span>;
   };
 
   return (
-    <div className="w-64 bg-gray-800 border border-gray-700 rounded-tl-lg shadow-lg overflow-hidden">
-      <div
-        className="p-2 bg-gray-700 flex justify-between items-center cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <h2 className="font-semibold text-white">Design Tokens</h2>
-        <Button variant="ghost" size="sm" className="text-white">
-          {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-        </Button>
-      </div>
-      {isExpanded && (
-        <div className="max-h-64 overflow-y-auto p-2">
-          <div className="space-y-2">
-            {tokens.map((token) => (
-              <div
-                key={token.name}
-                className="flex items-center justify-between p-2 bg-gray-700 rounded hover:bg-gray-600"
-              >
-                <div className="flex items-center space-x-2">
-                  {renderTokenPreview(token)}
-                  <span className="text-sm font-mono text-white">{token.name}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleCopyToken(token.name)}
-                  className="text-gray-400 hover:text-white"
-                  title="Copy token name"
-                >
-                  {copiedToken === token.name ? <Check size={14} /> : <Copy size={14} />}
-                </Button>
+    <Card className="w-64 bg-background text-foreground border-border">
+      <Accordion type="single" collapsible>
+        <AccordionItem value="design-tokens" className="border-border">
+          <AccordionTrigger className="px-4 py-2 hover:bg-muted">
+            <h2 className="font-semibold">Design Tokens</h2>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="max-h-64 overflow-y-auto p-2">
+              <div className="space-y-2">
+                {tokens.map((token) => (
+                  <Card key={token.name} className="bg-card text-card-foreground border-border">
+                    <CardContent className="flex items-center justify-between p-2">
+                      <div className="flex items-center space-x-2">
+                        {renderTokenPreview(token)}
+                        <span className="text-sm font-mono">{token.name}</span>
+                        <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
+                          {token.type}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCopyToken(token.name)}
+                        title="Copy token name"
+                        className="text-foreground hover:bg-muted"
+                      >
+                        {copiedToken === token.name ? <Check size={14} /> : <Copy size={14} />}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </Card>
   );
 };

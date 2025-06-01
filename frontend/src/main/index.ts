@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import sqlite3 from 'sqlite3';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
-import icon from '../../resources/icon.png?asset';
+import icon from '../../resources/tray-icon.png?asset';
 
 // Initialize databases
 const dbPath = path.join(app.getPath("userData"), "pixelens");
@@ -372,7 +372,7 @@ ipcMain.handle("show-notification", async (_, title: string, body: string) => {
   const notification = new Notification({
     title,
     body,
-    icon: path.join(__dirname, "../assets/icon.png"),
+    icon: path.join(__dirname, "../../resources/tray-icon.png"),
   });
   notification.show();
   return true;

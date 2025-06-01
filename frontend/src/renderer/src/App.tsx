@@ -8,6 +8,8 @@ import { StyleEditorPanel } from "./components/StyleEditorPanel";
 import { DesignTokensPanel } from "./components/DesignTokensPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { AboutModal } from "./components/AboutModal";
+import { ThemeProvider } from "./components/theme-provider";
+import "./assets/index.css";
 
 const App: React.FC = () => {
   const [workspacePanelVisible, setWorkspacePanelVisible] = useState<boolean>(true);
@@ -67,77 +69,75 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className={`h-screen flex flex-col ${theme === "dark" ? "dark" : ""}`}>
-      <TitleBar
-        onOpenSettings={() => {
-          console.log("onOpenSettings called, setting settingsVisible to true");
-          setSettingsVisible(true);
-        }}
-        onShowAbout={() => {
-          console.log("onShowAbout called, setting aboutVisible to true");
-          setAboutVisible(true);
-        }}
-      />
+    <ThemeProvider defaultTheme="dark">
+      <div className={`h-screen flex flex-col ${theme === "dark" ? "dark" : ""}`}>
+        <TitleBar
+          onOpenSettings={() => {
+            console.log("onOpenSettings called, setting settingsVisible to true");
+            setSettingsVisible(true);
+          }}
+          onShowAbout={() => {
+            console.log("onShowAbout called, setting aboutVisible to true");
+            setAboutVisible(true);
+          }}
+        />
 
-      <div className="flex flex-1 overflow-hidden">
-        {workspacePanelVisible && (
-          <WorkspacePanel projectPath={projectPath} onSelectProject={(path: string) => setProjectPath(path)} />
-        )}
+        <div className="flex flex-1 overflow-hidden">
+          {workspacePanelVisible && (
+            <WorkspacePanel projectPath={projectPath} onSelectProject={(path: string) => setProjectPath(path)} />
+          )}
 
-        <div className="flex flex-col flex-1 overflow-hidden" style={{ minWidth: "300px" }}>
-          <EmbeddedBrowser url={currentUrl} onUrlChange={setCurrentUrl} onSelectElement={setSelectedElement} />
+          <div className="flex flex-col flex-1 overflow-hidden" style={{ minWidth: "300px" }}>
+            <EmbeddedBrowser url={currentUrl} onUrlChange={setCurrentUrl} onSelectElement={setSelectedElement} />
 
-          <div className="relative">
-            <ChatInterface chatPanelHeight={chatPanelHeight} setChatPanelHeight={setChatPanelHeight} />
+            <div className="relative">
+              <ChatInterface chatPanelHeight={chatPanelHeight} setChatPanelHeight={setChatPanelHeight} />
+            </div>
           </div>
+
+          {issuePanelVisible && (
+            <IssuePanel
+              //@ts-ignore
+              onHighlightElement={(selector: string) => {
+                // Logic to highlight element in browser
+              }}
+            />
+          )}
         </div>
 
-        {issuePanelVisible && (
-          <IssuePanel
-            //@ts-ignore
-            onHighlightElement={(selector: string) => {
-              // Logic to highlight element in browser
-            }}
-          />
+        {styleEditorVisible && (
+          <StyleEditorPanel element={selectedElement} onClose={() => setStyleEditorVisible(false)} />
+        )}
+
+        {settingsVisible && (
+          <>
+            <SettingsPanel
+              onClose={() => {
+                console.log("Closing SettingsPanel");
+                setSettingsVisible(false);
+              }}
+            />
+          </>
+        )}
+
+        {aboutVisible && (
+          <>
+            <AboutModal
+              onClose={() => {
+                console.log("Closing AboutModal");
+                setAboutVisible(false);
+              }}
+            />
+          </>
+        )}
+
+        {designTokensPanelVisible && (
+          <div className="absolute bottom-0 right-0 z-10">
+            <DesignTokensPanel />
+          </div>
         )}
       </div>
-
-      {styleEditorVisible && (
-        <StyleEditorPanel element={selectedElement} onClose={() => setStyleEditorVisible(false)} />
-      )}
-
-      {settingsVisible && (
-        <>
-          <SettingsPanel
-            onClose={() => {
-              console.log("Closing SettingsPanel");
-              setSettingsVisible(false);
-            }}
-            onThemeChange={(newTheme: "dark" | "light") => {
-              setTheme(newTheme);
-              (window.api as any).saveSettings({ theme: newTheme });
-            }}
-          />
-        </>
-      )}
-
-      {aboutVisible && (
-        <>
-          <AboutModal
-            onClose={() => {
-              console.log("Closing AboutModal");
-              setAboutVisible(false);
-            }}
-          />
-        </>
-      )}
-
-      {designTokensPanelVisible && (
-        <div className="absolute bottom-0 right-0 z-10">
-          <DesignTokensPanel />
-        </div>
-      )}
-    </div>
+    </ThemeProvider>
   );
 };
 

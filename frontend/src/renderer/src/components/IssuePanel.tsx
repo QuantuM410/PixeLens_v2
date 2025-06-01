@@ -10,6 +10,11 @@ import {
   X,
   Eye,
 } from "lucide-react";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Issue {
   id: string;
@@ -105,11 +110,11 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
   function getSeverityIcon(severity: string): JSX.Element | null {
     switch (severity) {
       case "high":
-        return <AlertCircle className="text-red-500" size={16} />;
+        return <AlertCircle className="text-destructive" size={16} />;
       case "medium":
-        return <AlertTriangle className="text-orange-500" size={16} />;
+        return <AlertTriangle className="text-priority-medium" size={16} />;
       case "low":
-        return <Info className="text-yellow-500" size={16} />;
+        return <Info className="text-priority-low" size={16} />;
       default:
         return null;
     }
@@ -142,133 +147,142 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
   }
 
   return (
-    <div className="w-80 bg-gray-800 text-white flex flex-col border-l border-gray-700 shadow-lg">
-      <div className="p-3 border-b border-gray-700 bg-gradient-to-r from-gray-800 to-gray-750">
+    <Card className="w-90 flex flex-col border-l border-border bg-background text-foreground rounded-none">
+      <CardHeader className="border-b border-border">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="font-semibold">Issues</h2>
-          <div className="text-xs bg-gray-700 px-2 py-0.5 rounded-full">{activeIssues.length} active</div>
+          <CardTitle>Issues</CardTitle>
+          <Badge variant="secondary" className="bg-secondary text-secondary-foreground">{activeIssues.length} active</Badge>
         </div>
-        <div className="flex mt-3 text-sm">
-          <div className="flex items-center mr-2">
-            <button
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleToggleSort}
-              className="flex items-center px-2 py-1 bg-gray-700 rounded-l hover:bg-gray-600 text-xs"
+              className="rounded-r-none border-border text-foreground hover:bg-muted"
             >
               Sort: {sortBy === "severity" ? "Severity" : "Type"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleToggleSortDirection}
-              className="px-2 py-1 bg-gray-700 rounded-r hover:bg-gray-600 text-xs"
+              className="rounded-l-none border-border text-foreground hover:bg-muted"
             >
               {sortDirection === "asc" ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
-            </button>
+            </Button>
           </div>
-          <div className="relative mr-2">
-            <button
-              onClick={() => setFilterType(filterType ? null : "accessibility")}
-              className="flex items-center px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 text-xs"
-            >
-              <Filter size={14} className="mr-1" />
-              {filterType || "All"}
-            </button>
-          </div>
-          <div className="ml-auto">
-            <button
-              onClick={() => setShowFixedIssues(!showFixedIssues)}
-              className={`flex items-center px-2 py-1 rounded text-xs ${
-                showFixedIssues ? "bg-green-700 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"
-              }`}
-            >
-              <CheckCircle size={14} className="mr-1" />
-              Fixed
-            </button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterType(filterType ? null : "accessibility")}
+            className="border-border text-foreground hover:bg-muted"
+          >
+            <Filter size={14} className="mr-1" />
+            {filterType || "All"}
+          </Button>
+          <Button
+            variant={showFixedIssues ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowFixedIssues(!showFixedIssues)}
+            className={showFixedIssues ? "bg-primary text-primary-foreground hover:bg-primary/90" : "border-border text-foreground hover:bg-muted"}
+          >
+            <CheckCircle size={14} className="mr-1" />
+            Fixed
+          </Button>
         </div>
-      </div>
+      </CardHeader>
 
-      <div className="flex-1 overflow-auto">
+      <ScrollArea className="flex-1">
         {filteredIssues.length > 0 ? (
           <div className="p-2 space-y-2">
             {filteredIssues.map((issue) => (
-              <div
+              <Accordion
                 key={issue.id}
-                className={`bg-gray-750 rounded-md overflow-hidden border border-gray-700 shadow-sm ${
-                  showFixedIssues ? "opacity-70" : ""
-                }`}
+                type="single"
+                collapsible
+                value={expandedIssue === issue.id ? issue.id : undefined}
+                onValueChange={(value) => setExpandedIssue(value || null)}
               >
-                <div
-                  className="p-3 flex items-start cursor-pointer hover:bg-gray-700 transition-colors"
-                  onClick={() => setExpandedIssue(expandedIssue === issue.id ? null : issue.id)}
-                >
-                  <div className="mr-4 mt-0.5">{getSeverityIcon(issue.severity)}</div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-sm">{issue.title}</h3>
-                    <p className="text-xs text-gray-400 mt-1">{issue.description}</p>
-                    <div className="flex items-center mt-2">
-                      <span className="text-xs px-2 py-0.5 bg-gray-700 rounded-full text-gray-300">{issue.type}</span>
-                      {showFixedIssues && (
-                        <span className="ml-2 text-xs px-2 py-0.5 bg-green-800 rounded-full text-green-200 flex items-center">
-                          <CheckCircle size={10} className="mr-1" />
-                          Fixed
-                        </span>
-                      )}
+                <AccordionItem value={issue.id} className="border-0 border-border">
+                  <AccordionTrigger className="p-3 hover:bg-muted rounded-md">
+                    <div className="flex items-start w-full">
+                      <div className="mr-4 mt-0.5">{getSeverityIcon(issue.severity)}</div>
+                      <div className="flex-1 text-left">
+                        <h3 className="font-medium text-sm">{issue.title}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{issue.description}</p>
+                        <div className="flex items-center mt-2 space-x-2">
+                          <Badge variant="secondary" className="bg-secondary text-secondary-foreground">{issue.type}</Badge>
+                          {showFixedIssues && (
+                            <Badge variant="default" className="flex items-center bg-primary text-primary-foreground">
+                              <CheckCircle size={10} className="mr-1" />
+                              Fixed
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {expandedIssue === issue.id && (
-                  <div className="px-3 pb-3 pt-1 border-t border-gray-700 bg-gray-800">
-                    <div className="bg-gray-900 p-2 rounded text-sm font-mono mb-3 text-xs overflow-x-auto">
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3 pb-3 pt-1 bg-muted rounded-b-md">
+                    <div className="bg-background p-2 rounded text-sm font-mono mb-3 text-xs overflow-x-auto">
                       {issue.fix}
                     </div>
                     <div className="flex space-x-2">
                       {!showFixedIssues ? (
-                        <button
+                        <Button
+                          variant="default"
+                          size="sm"
                           onClick={() => handleApplyFix(issue)}
-                          className="px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-500 transition-colors flex items-center"
+                          className="flex items-center bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           <CheckCircle size={12} className="mr-1.5" />
                           Apply Fix
-                        </button>
+                        </Button>
                       ) : (
-                        <button
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => handleRemoveFixed(issue.id)}
-                          className="px-3 py-1.5 bg-red-600 text-white rounded text-xs hover:bg-red-500 transition-colors flex items-center"
+                          className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           <X size={12} className="mr-1.5" />
                           Remove Fix
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
+                        variant="default"
+                        size="sm"
                         onClick={() => handleLocateElement(issue.element)}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-500 transition-colors flex items-center"
+                        className="flex items-center bg-primary text-primary-foreground hover:bg-primary/90"
                       >
                         <Eye size={12} className="mr-1.5" />
                         Locate
-                      </button>
+                      </Button>
                     </div>
-                  </div>
-                )}
-              </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             ))}
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400 p-4">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">
             <div className="text-center">
               <CheckCircle size={32} className="mx-auto mb-2 text-green-500" />
               <p className="text-sm">No {showFixedIssues ? "fixed" : ""} issues found</p>
               {showFixedIssues && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowFixedIssues(false)}
-                  className="mt-3 px-3 py-1.5 bg-gray-700 text-white rounded text-xs hover:bg-gray-600"
+                  className="mt-3 border-border text-foreground hover:bg-muted"
                 >
                   Show Active Issues
-                </button>
+                </Button>
               )}
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </ScrollArea>
+    </Card>
   );
 };

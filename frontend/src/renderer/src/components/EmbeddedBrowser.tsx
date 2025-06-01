@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { RefreshCw, Smartphone, Tablet, Monitor, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface EmbeddedBrowserProps {
   url: string;
@@ -91,71 +94,51 @@ export const EmbeddedBrowser: React.FC<EmbeddedBrowserProps> = ({ url, onUrlChan
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-900 overflow-hidden">
-      <div className="bg-gray-800 border-b border-gray-700 p-2 flex items-center space-x-2">
-        <form onSubmit={handleUrlSubmit} className="flex-1 flex">
-          <input
-            type="text"
-            value={inputUrl}
-            onChange={(e) => setInputUrl(e.target.value)}
-            placeholder="Enter URL (e.g., http://localhost:3000)"
-            className="flex-1 bg-gray-700 text-white px-3 py-1 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded-r hover:bg-blue-500">
-            Go
-          </button>
-        </form>
+    <div className="flex-1 flex flex-col overflow-hidden bg-background text-foreground">
+      <Card className="border-b border-border rounded-none">
+        <CardContent className="p-2 flex items-center space-x-2 mt-6">
+          <form onSubmit={handleUrlSubmit} className="flex-1 flex items-center space-x-2">
+            <Input
+              type="text"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              placeholder="Enter URL (e.g., http://localhost:3000)"
+              className="flex-1 border-border bg-background text-foreground placeholder:text-muted-foreground"
+            />
+            <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">Go</Button>
+          </form>
 
-        <button
-          onClick={handleRefresh}
-          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600"
-          title="Refresh"
-        >
-          <RefreshCw size={18} />
-        </button>
+          <Button variant="outline" size="icon" onClick={handleRefresh} title="Refresh" className="border-border text-foreground hover:bg-muted">
+            <RefreshCw size={18} />
+          </Button>
 
-        <button
-          onClick={() => setViewportPreset("mobile")}
-          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600"
-          title="Mobile View (375x667)"
-        >
-          <Smartphone size={18} />
-        </button>
+          <Button variant="outline" size="icon" onClick={() => setViewportPreset("mobile")} title="Mobile View (375x667)" className="border-border text-foreground hover:bg-muted">
+            <Smartphone size={18} />
+          </Button>
 
-        <button
-          onClick={() => setViewportPreset("tablet")}
-          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600"
-          title="Tablet View (768x1024)"
-        >
-          <Tablet size={18} />
-        </button>
+          <Button variant="outline" size="icon" onClick={() => setViewportPreset("tablet")} title="Tablet View (768x1024)" className="border-border text-foreground hover:bg-muted">
+            <Tablet size={18} />
+          </Button>
 
-        <button
-          onClick={() => setViewportPreset("desktop")}
-          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600"
-          title="Desktop View (Full Width)"
-        >
-          <Monitor size={18} />
-        </button>
+          <Button variant="outline" size="icon" onClick={() => setViewportPreset("desktop")} title="Desktop View (Full Width)" className="border-border text-foreground hover:bg-muted">
+            <Monitor size={18} />
+          </Button>
 
-        <button
-          onClick={openExternal}
-          className="bg-gray-700 text-white p-1 rounded hover:bg-gray-600"
-          title="Open in Browser"
-        >
-          <ExternalLink size={18} />
-        </button>
+          <Button variant="outline" size="icon" onClick={openExternal} title="Open in Browser" className="border-border text-foreground hover:bg-muted">
+            <ExternalLink size={18} />
+          </Button>
 
-        {viewportSize && (
-          <div className="text-gray-400 text-sm">
-            {viewportSize.width} × {viewportSize.height}
-          </div>
-        )}
-      </div>
+          {viewportSize && (
+            <span className="text-sm text-muted-foreground">
+              {viewportSize.width} × {viewportSize.height}
+            </span>
+          )}
+        </CardContent>
+      </Card>
 
-      <div ref={containerRef} className="flex-1 relative bg-white overflow-auto flex justify-center">
+      <div ref={containerRef} className="flex-1 relative bg-background overflow-auto flex justify-center">
         {isLoading && (
-          <div className="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-muted/50 flex items-center justify-center z-10">
             <div className="loader"></div>
           </div>
         )}
@@ -163,7 +146,7 @@ export const EmbeddedBrowser: React.FC<EmbeddedBrowserProps> = ({ url, onUrlChan
         <iframe
           ref={iframeRef}
           src={url}
-          className="w-full h-full border-0"
+          className="w-full h-full border-0 bg-background"
           onLoad={handleIframeLoad}
           title="Embedded Browser"
         />
