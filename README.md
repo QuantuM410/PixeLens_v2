@@ -17,6 +17,12 @@ $ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
+### Install node environment
+
+```bash
+$ nodeenv -p --node=22.13.0
+```
+
 **Note:**
 
 - You may need to activate virtual env again for the node environment to work initially.  
