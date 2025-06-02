@@ -69,6 +69,7 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [panelWidth, setPanelWidth] = useState<number>(defaultPanelWidth);
   const [originalWidth, setOriginalWidth] = useState<number>(defaultPanelWidth);
+  const [filePanelHeight, setFilePanelHeight] = useState<string>("h-3/5"); // Default height for view mode
   const isResizing = useRef<boolean>(false);
   const startX = useRef<number>(0);
   const startWidth = useRef<number>(panelWidth);
@@ -109,6 +110,7 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
     if (!selectedFile) {
       setFileContent(null);
       setEditMode(false);
+      setFilePanelHeight("h-3/5"); // Reset to default height when no file is selected
       setPanelWidth(originalWidth);
       return;
     }
@@ -134,8 +136,12 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
     if (editMode && !isCollapsed) {
       setOriginalWidth(panelWidth);
       setPanelWidth(Math.max(panelWidth, window.innerWidth / 2));
+      setFilePanelHeight("h-3/5"); // Increase height in edit mode
+    } else if (!editMode && selectedFile) {
+      setFilePanelHeight("h-3/5"); // Default height in view mode
     } else if (!editMode && !selectedFile) {
       setPanelWidth(originalWidth);
+      setFilePanelHeight("h-3/5"); // Reset when no file is selected
     }
   }, [editMode, selectedFile, panelWidth, originalWidth, isCollapsed]);
 
@@ -385,7 +391,7 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
         </div>
       ) : (
         <>
-          <CardHeader className="flex flex-row items-center justify-between border-b border-border">
+          <CardHeader className="flex flex-row items-center p-0 justify-between border-b border-border">
             <CardTitle>Workspace</CardTitle>
             <div className="flex items-center space-x-2">
               <Button
@@ -469,8 +475,8 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
               </ScrollArea>
 
               {selectedFile && (
-                <div className="h-2/5 border-t border-border overflow-hidden flex flex-col">
-                  <div className="p-2 bg-muted text-sm font-medium flex justify-between items-center">
+                <div className={`${filePanelHeight} border-t border-border overflow-hidden flex flex-col ${editMode ? "min-h-96" : ""}`}>
+                  <div className="p-2 bg-muted text-sm font-medium flex justify-between items-center shrink-0">
                     <div className="truncate flex-1">{selectedFile.split("/").pop() || selectedFile.split("\\").pop()}</div>
                     <div className="flex space-x-1">
                       {!editMode ? (
@@ -508,37 +514,45 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                           </Button>
                         </>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCloseFile}
-                        title="Close file"
-                        className="text-foreground hover:bg-background"
-                      >
-                        <X size={14} />
-                      </Button>
+                      {!editMode && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleCloseFile}
+                          title="Close file"
+                          className="text-foreground hover:bg-background"
+                        >
+                          <X size={14} />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <ScrollArea className="flex-1 bg-background text-foreground">
-                    {editMode ? (
+                  {editMode ? (
+                    <div className="flex-1 h-full bg-background text-foreground">
                       <textarea
                         value={editedContent}
                         onChange={(e) => setEditedContent(e.target.value)}
-                        className="w-full h-full p-2 font-mono text-sm border-none outline-none resize-none bg-background text-foreground"
+                        className="w-full h-full p-2 font-mono text-sm border-none outline-none resize-none bg-background text-foreground box-border"
+                        style={{ minHeight: "100%" }}
                       />
-                    ) : fileContent ? (
-                      <SyntaxHighlighter
-                        language={getFileLanguage(selectedFile)}
-                        style={atomOneDark}
-                        className="p-2 rounded-none text-sm bg-background text-foreground"
-                        customStyle={{ margin: 0 }}
-                      >
-                        {fileContent}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <div className="p-2 text-muted-foreground">Unable to load file content.</div>
-                    )}
-                  </ScrollArea>
+                    </div>
+                  ) : (
+                    <ScrollArea className="flex-1 h-full bg-background text-foreground">
+                      {fileContent ? (
+                        <SyntaxHighlighter
+                          language={getFileLanguage(selectedFile)}
+                          style={atomOneDark}
+                          className="p-2 rounded-none text-sm bg-background text-foreground"
+                          customStyle={{ margin: 0, whiteSpace: "pre" }}
+                          wrapLongLines={true}
+                        >
+                          {fileContent}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <div className="p-2 text-muted-foreground">Unable to load file content.</div>
+                      )}
+                    </ScrollArea>
+                  )}
                 </div>
               )}
             </div>
