@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, JSX } from "react";
-import { Send, ThumbsUp, ThumbsDown, X, Sparkles, Maximize2, Minimize2 } from "lucide-react";
+import { Send, ThumbsUp, ThumbsDown, X, Sparkles, Maximize2, Minimize2, Trash2 } from "lucide-react";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import js from "react-syntax-highlighter/dist/esm/languages/hljs/javascript";
 import html from "react-syntax-highlighter/dist/esm/languages/hljs/xml";
@@ -60,7 +60,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
 
     const userMessage: Message = {
@@ -74,32 +74,46 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
-      let response = "";
+    try {
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            ...messages.map(msg => ({ role: msg.role, content: msg.content })),
+            { role: 'user', content: input }
+          ]
+        }),
+      });
 
-      if (input.toLowerCase().includes("alt text")) {
-        response =
-          'I found an image missing alt text. Here\'s the fix:\n\n```html\n<img src="logo.png" alt="Company Logo">\n```'.replace(
-            "<img",
-            "<ImageIcon",
-          );
-      } else if (input.toLowerCase().includes("button")) {
-        response =
-          "The button styling is inconsistent. Here's the fix:\n\n```css\n.button {\n  padding: 12px 24px;\n  border-radius: 4px;\n  background-color: #3b82f6;\n  color: white;\n}\n```";
+      const data = await response.json();
+
+      if (response.ok) {
+        const assistantMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.content,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
       } else {
-        response = "I'll analyze your UI for issues. Can you provide more details about what you're looking for?";
+        throw new Error(data.error || 'Failed to get response from server');
       }
-
-      const assistantMessage: Message = {
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: response,
+        content: "Sorry, I couldn't process your request. Please try again.",
         timestamp: new Date(),
       };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -122,6 +136,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
         timestamp: new Date(),
       },
     ]);
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
   };
 
   const handleResizeStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -254,6 +272,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
           >
             <X size={16} />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClearChat}
+            title="Clear Chat"
+            className="text-foreground hover:bg-muted"
+          >
+            <Trash2 size={16} />
+          </Button>
         </div>
       </CardHeader>
 
@@ -271,31 +298,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
               >
                 <CardContent className="p-0">
                   {renderMessageContent(message.content)}
-                  <div className="flex items-center mt-2 space-x-2">
-                    <span className="text-xs text-muted-foreground">
-                      {message.timestamp.toLocaleTimeString()}
-                    </span>
-                    {message.role === "assistant" && (
-                      <div className="flex space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleFeedback(message.id, "thumbs-up")}
-                          className="hover:text-green-400"
-                        >
-                          <ThumbsUp size={14} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleFeedback(message.id, "thumbs-down")}
-                          className="hover:text-destructive"
-                        >
-                          <ThumbsDown size={14} />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  {message.role === "assistant" && (
+                    <div className="flex space-x-1 mt-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleFeedback(message.id, "thumbs-up")}
+                        className="hover:text-green-400"
+                      >
+                        <ThumbsUp size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleFeedback(message.id, "thumbs-down")}
+                        className="hover:text-destructive"
+                      >
+                        <ThumbsDown size={14} />
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
