@@ -23,22 +23,27 @@ interface Issue {
   severity: "high" | "medium" | "low";
   type: string;
   element: string;
-  fix: string;
+  suggestedFix: string;
 }
 
 interface IssuePanelProps {
   onHighlightElement: (selector: string) => void;
+  onScanUI: () => void;
+  issues?: Issue[];
+  onApplyFix: (issue: Issue) => void;
+  onLocate: (issue: Issue) => void;
 }
 
-export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) => {
+export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement, onScanUI, issues: propIssues, onApplyFix, onLocate }) => {
   const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"severity" | "type">("severity");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [fixedIssues, setFixedIssues] = useState<string[]>([]);
   const [showFixedIssues, setShowFixedIssues] = useState<boolean>(false);
+  const [highlightedIssueId, setHighlightedIssueId] = useState<string | null>(null);
 
-  const issues: Issue[] = [
+  const defaultIssues: Issue[] = [
     {
       id: "1",
       title: "Missing Alt Text",
@@ -46,7 +51,7 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
       severity: "high",
       type: "accessibility",
       element: "img.logo",
-      fix: '<img src="logo.png" alt="Company Logo">',
+      suggestedFix: '<img src="logo.png" alt="Company Logo">',
     },
     {
       id: "2",
@@ -55,7 +60,7 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
       severity: "medium",
       type: "accessibility",
       element: ".hero-text",
-      fix: "color: #121212; background-color: #ffffff;",
+      suggestedFix: "color: #121212; background-color: #ffffff;",
     },
     {
       id: "3",
@@ -64,7 +69,7 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
       severity: "low",
       type: "styling",
       element: ".cta-button",
-      fix: "padding: 12px 24px; border-radius: 4px;",
+      suggestedFix: "padding: 12px 24px; border-radius: 4px;",
     },
     {
       id: "4",
@@ -73,14 +78,16 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
       severity: "medium",
       type: "performance",
       element: ".hero-image",
-      fix: "Compress image to reduce file size by 70%",
+      suggestedFix: "Compress image to reduce file size by 70%",
     },
   ];
 
-  const activeIssues = issues.filter((issue) => !fixedIssues.includes(issue.id));
+  const issues = propIssues || defaultIssues;
+
+  const activeIssues = issues?.filter((issue) => !fixedIssues.includes(issue.id));
 
   const filteredIssues = (
-    showFixedIssues ? fixedIssues.map((id) => issues.find((issue) => issue.id === id)) : activeIssues
+    showFixedIssues ? fixedIssues.map((id) => issues?.find((issue) => issue.id === id)) : activeIssues
   )
     .filter((issue): issue is Issue => !!issue && (!filterType || issue.type === filterType))
     .sort((a, b) => {
@@ -133,17 +140,23 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
   }
 
   function handleApplyFix(issue: Issue) {
-    console.log("Applying fix:", issue.fix);
+    onApplyFix(issue);
     setFixedIssues((prev) => [...prev, issue.id]);
     setExpandedIssue(null);
   }
 
-  function handleLocateElement(selector: string) {
-    onHighlightElement(selector);
+  function handleLocateElement(issue: Issue) {
+    onLocate(issue);
+    setHighlightedIssueId(issue.id);
   }
 
   function handleRemoveFixed(issueId: string) {
     setFixedIssues((prev) => prev.filter((id) => id !== issueId));
+  }
+
+  function handleRemoveHighlight(issue: Issue) {
+    onHighlightElement("");
+    setHighlightedIssueId(null);
   }
 
   return (
@@ -152,6 +165,16 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
         <div className="flex justify-between items-center mb-2">
           <CardTitle>Issues</CardTitle>
           <Badge variant="secondary" className="bg-secondary text-secondary-foreground">{activeIssues.length} active</Badge>
+        </div>
+        <div className="flex items-center mb-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onScanUI}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Scan UI for Issues
+          </Button>
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex items-center">
@@ -225,7 +248,7 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
                   </AccordionTrigger>
                   <AccordionContent className="px-3 pb-3 pt-1 bg-muted rounded-b-md">
                     <div className="bg-background p-2 rounded text-sm font-mono mb-3 text-xs overflow-x-auto">
-                      {issue.fix}
+                      {issue.suggestedFix}
                     </div>
                     <div className="flex space-x-2">
                       {!showFixedIssues ? (
@@ -249,15 +272,27 @@ export const IssuePanel: React.FC<IssuePanelProps> = ({ onHighlightElement }) =>
                           Remove Fix
                         </Button>
                       )}
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleLocateElement(issue.element)}
-                        className="flex items-center bg-primary text-primary-foreground hover:bg-primary/90"
-                      >
-                        <Eye size={12} className="mr-1.5" />
-                        Locate
-                      </Button>
+                      {highlightedIssueId === issue.id ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveHighlight(issue)}
+                          className="flex items-center text-destructive border-destructive hover:bg-destructive/10"
+                        >
+                          <X size={12} className="mr-1.5" />
+                          Remove Highlight
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleLocateElement(issue)}
+                          className="flex items-center bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                          <Eye size={12} className="mr-1.5" />
+                          Locate
+                        </Button>
+                      )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
