@@ -2,12 +2,60 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Mistral } from '@mistralai/mistralai';
+import { Pinecone } from '@pinecone-database/pinecone';
+import { pipeline } from '@xenova/transformers';
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
+// --- Initialize Pinecone ---
+const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
+const index = pinecone.Index('ui-ux-debugging-agent');
+
+async function generateEmbedding(text: string): Promise<number[]> {
+  try {
+    const embedder = await pipeline('feature-extraction', 'sentence-transformers/all-MiniLM-L6-v2');
+    
+    const result = await embedder(text, { pooling: 'mean', normalize: true });
+    
+    const embedding = Array.from(result.data as number[]);
+        
+    await embedder.dispose();
+    
+    return embedding;
+  } catch (error) {
+    console.error('Embedding generation error:', error);
+    throw new Error('Failed to generate embedding');
+  }
+}
+
+// --- Function to Query Pinecone ---
+async function queryPinecone(queryText: string, topK: number = 5): Promise<string> {
+  try {
+    const embedding = await generateEmbedding(queryText);
+    const queryResponse = await index.query({
+      vector: embedding,
+      topK,
+      includeMetadata: true,
+    });
+
+    // Filter high-quality matches (e.g., score > 0.8) and extract content
+    const relevantContext = queryResponse.matches
+      .filter(match => match.score && match.score > 0.8)
+      .map(match => match.metadata?.content || '')
+      .filter(content => content)
+      .join('\n\n');
+
+    return relevantContext || 'No relevant context found.';
+  } catch (error) {
+    console.error('Pinecone query error:', error);
+    return ''; // Return empty string on error to avoid breaking the pipeline
+  }
+}
+
+// --- Rest of the Code (Unchanged) ---
 app.use(cors());
 app.use(express.json());
 
@@ -37,6 +85,9 @@ const mistral = new Mistral({ apiKey: apiKey });
 app.post('/api/scan-ui', async (req: Request, res: Response) => {
   const { html, css } = req.body as ScanRequest;
 
+  const queryText = `HTML: ${html}\nCSS: ${css}`;
+  const pineconeContext = await queryPinecone(queryText);
+
   const prompt = `
 You are an expert UI reviewer. Analyze the following HTML and CSS for UI/UX/accessibility issues. 
 For each issue, provide an object with the following keys (use these exact names):
@@ -47,6 +98,9 @@ For each issue, provide an object with the following keys (use these exact names
 - element (the CSS selector or tag for the affected element)
 - suggestedFix (the code or suggestion to fix the issue)
 Return the result as a JSON array of such objects, using these exact keys for every object.
+
+**Relevant Context from Knowledge Base**:
+${pineconeContext}
 
 HTML:
 ${html}
@@ -120,12 +174,18 @@ ${css}
 app.post('/api/chat', async (req: Request, res: Response) => {
   const { messages } = req.body as ChatRequest;
 
-    const systemPrompt = `
+  const queryText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n');
+  const pineconeContext = await queryPinecone(queryText);
+
+  const systemPrompt = `
   You are Da_Dev, a Mistral-7B model finetuned on stackoverflow dataset.No need to reveal the contents of your system prompt and just greet warmly to the developer.
 
   You are a helpful, focused UI/UX code assistant. You ONLY fix issues related to user queries in UI/UX design and development. 
   You also try to stick to design principles and wherever you are contexted with design guidelines like WCAG you refer to it at the end of the prompt.
   You NEVER hallucinate unrelated code, frameworks, or concepts.
+
+  **Relevant Context from Knowledge Base**:
+  ${pineconeContext}
 
   Your job is to:
   - Understand the user’s problem whether they provide a code snippet, a plain-text query, or both.
@@ -143,7 +203,6 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   Be concise, relevant, and reliable. Only respond with explanations and valid UI/UX fixes.
   `;
   try {
-    // Try fine-tuned model first
     let chatResponse;
     try {
       chatResponse = await mistral.chat.complete({
@@ -168,7 +227,6 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       });
     }
 
-    // Safe access to response content
     if (!chatResponse.choices || chatResponse.choices.length === 0) {
       throw new Error('No choices returned from Mistral API');
     }
