@@ -8,6 +8,7 @@ const api = {
   readFile: (filePath: any) => ipcRenderer.invoke("read-file", filePath),
   writeFile: (filePath: any, content: any) => ipcRenderer.invoke("write-file", filePath, content),
   searchFiles: (projectPath: any, searchTerm: any) => ipcRenderer.invoke("search-files", projectPath, searchTerm),
+  findAndApplyFix: (projectPath: any, issue: any) => ipcRenderer.invoke("find-and-apply-fix", projectPath, issue),
 
   // Shell operations
   openExternal: (url: any) => ipcRenderer.invoke("open-external", url),

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { RefreshCw, Smartphone, Tablet, Monitor, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,77 @@ interface ViewportSize {
   height: number;
 }
 
-//@ts-ignore
-export const EmbeddedBrowser: React.FC<EmbeddedBrowserProps> = ({ url, onUrlChange, onSelectElement }) => {
+const EmbeddedBrowserInner = (
+  { url, onUrlChange, onSelectElement }: EmbeddedBrowserProps,
+  ref: React.ForwardedRef<any>
+) => {
   const [inputUrl, setInputUrl] = useState<string>(url);
   const [viewportSize, setViewportSize] = useState<ViewportSize | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    async extractDomAndCss() {
+      const iframe = iframeRef.current;
+      if (!iframe || !iframe.contentDocument) return { html: '', css: '' };
+      const doc = iframe.contentDocument;
+      const html = doc.body ? doc.body.outerHTML : '';
+      // Extract all computed styles as a string
+      let css = '';
+      try {
+        const sheets = Array.from(doc.styleSheets);
+        for (const sheet of sheets) {
+          try {
+            const rules = (sheet as CSSStyleSheet).cssRules;
+            for (const rule of Array.from(rules)) {
+              css += rule.cssText + '\n';
+            }
+          } catch (e) { /* ignore CORS issues */ }
+        }
+      } catch (e) { /* ignore */ }
+      return { html, css };
+    },
+    highlightElement(selector: string) {
+      const iframe = iframeRef.current;
+      console.log("Iframe:", iframe?.contentDocument);
+      if (!iframe || !iframe.contentDocument) return;
+      const doc = iframe.contentDocument;
+      // Remove any previous highlights
+      const prevHighlights = doc.querySelectorAll('.__pixelens-highlight-box');
+      prevHighlights.forEach((el) => el.parentNode?.removeChild(el));
+      if (!selector) return; // Only remove highlights if selector is empty
+      // Find the element(s) to highlight
+      const elements = doc.querySelectorAll(selector);
+      console.log(`[EmbeddedBrowser] highlightElement: selector='${selector}', found ${elements.length} element(s)`);
+      if (elements.length === 0) {
+        console.warn(`[EmbeddedBrowser] No elements found for selector: '${selector}'`);
+        console.warn(`[EmbeddedBrowser] DOM body:`, doc.body ? doc.body.outerHTML.slice(0, 500) + '...' : 'No body');
+      }
+      elements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+          console.warn(`[EmbeddedBrowser] Element has zero size for selector: '${selector}'`, el);
+        }
+        const highlight = doc.createElement('div');
+        highlight.className = '__pixelens-highlight-box';
+        // Use position: absolute relative to body, and adjust for scroll
+        highlight.style.position = 'absolute';
+        highlight.style.left = `${rect.left + doc.documentElement.scrollLeft}px`;
+        highlight.style.top = `${rect.top + doc.documentElement.scrollTop}px`;
+        highlight.style.width = `${rect.width}px`;
+        highlight.style.height = `${rect.height}px`;
+        highlight.style.border = '3px solid #e53935';
+        highlight.style.zIndex = '2147483647';
+        highlight.style.pointerEvents = 'none';
+        highlight.style.boxSizing = 'border-box';
+        highlight.style.background = 'rgba(248, 20, 20, 0.15)';
+        highlight.style.borderRadius = '4px';
+        doc.body.appendChild(highlight);
+      });
+    }
+  }));
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -154,3 +217,5 @@ export const EmbeddedBrowser: React.FC<EmbeddedBrowserProps> = ({ url, onUrlChan
     </div>
   );
 };
+
+export const EmbeddedBrowser = forwardRef(EmbeddedBrowserInner);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, JSX } from "react";
+import { useState, useEffect, useRef, JSX, forwardRef, useImperativeHandle } from "react";
 import {
   Folder,
   File,
@@ -50,9 +50,15 @@ interface SearchResult {
 interface WorkspacePanelProps {
   projectPath: string | null;
   onSelectProject: (path: string) => void;
+  applyFixToFile?: (filePath: string, line: number, fix: string) => void;
+  highlightInFile?: (filePath: string, line: number) => void;
 }
 
-export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onSelectProject }) => {
+export const WorkspacePanel = forwardRef<{
+  handleApplyFixToFile: (filePath: string, line: number, fix: string) => void;
+  handleHighlightInFile: (filePath: string, line: number) => void;
+  refreshFileContent: (filePath: string) => void;
+}, WorkspacePanelProps>(({ projectPath, onSelectProject, applyFixToFile, highlightInFile }, ref) => {
   const defaultPanelWidth = 288;
   const minWidth = 250;
   const maxWidth = Math.min(600, window.innerWidth * 0.5);
@@ -73,6 +79,8 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
   const isResizing = useRef<boolean>(false);
   const startX = useRef<number>(0);
   const startWidth = useRef<number>(panelWidth);
+  const [highlightedLine, setHighlightedLine] = useState<number | null>(null);
+  const [pendingFix, setPendingFix] = useState<{ filePath: string; line: number; fix: string } | null>(null);
 
   useEffect(() => {
     if (!projectPath) return;
@@ -364,6 +372,71 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
     ));
   };
 
+  // Expose methods for parent to call
+  // (In a real app, you might use forwardRef, but for now, props are enough)
+  const handleApplyFixToFile = (filePath: string, line: number, fix: string) => {
+    setSelectedFile(filePath);
+    setHighlightedLine(line);
+    setPendingFix({ filePath, line, fix });
+    // TODO: Show UI to let user review and apply the fix
+  };
+
+  const handleHighlightInFile = (filePath: string, line: number) => {
+    setSelectedFile(filePath);
+    setHighlightedLine(line);
+    // Optionally scroll to line in UI
+  };
+
+  const refreshFileContent = async (filePath: string) => {
+    if (selectedFile === filePath) {
+      try {
+        const content: string = await (window.api as any).readFile(filePath);
+        setFileContent(content);
+        setEditedContent(content);
+      } catch (error) {
+        console.error("Error refreshing file content:", error);
+      }
+    }
+  };
+
+  const handleApplyPendingFix = async () => {
+    if (!pendingFix || !selectedFile) return;
+
+    try {
+      setLoading(true);
+      const success: boolean = await (window.api as any).writeFile(selectedFile, editedContent);
+      if (success) {
+        setFileContent(editedContent);
+        setPendingFix(null);
+        setHighlightedLine(null);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error applying fix:", error);
+      setLoading(false);
+    }
+  };
+
+  const handleDismissPendingFix = () => {
+    setPendingFix(null);
+    setHighlightedLine(null);
+    setEditedContent(fileContent || "");
+  };
+
+  // Highlight line in code view
+  const getLineProps = (lineNumber: number) => {
+    if (highlightedLine === lineNumber) {
+      return { style: { background: '#ffe066' } };
+    }
+    return {};
+  };
+
+  useImperativeHandle(ref, () => ({
+    handleApplyFixToFile,
+    handleHighlightInFile,
+    refreshFileContent,
+  }));
+
   return (
     <Card
       className="flex flex-col border-r border-border relative transition-all duration-200 ease-in-out bg-background text-foreground rounded-none"
@@ -545,11 +618,40 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
                           className="p-2 rounded-none text-sm bg-background text-foreground"
                           customStyle={{ margin: 0, whiteSpace: "pre" }}
                           wrapLongLines={true}
+                          showLineNumbers
+                          lineProps={getLineProps}
                         >
                           {fileContent}
                         </SyntaxHighlighter>
                       ) : (
                         <div className="p-2 text-muted-foreground">Unable to load file content.</div>
+                      )}
+                      {/* Show pending fix UI if needed */}
+                      {pendingFix && pendingFix.filePath === selectedFile && (
+                        <div className="p-2 mt-2 bg-yellow-100 text-yellow-900 rounded">
+                          <div className="font-bold mb-1">Suggested Fix:</div>
+                          <pre className="text-xs bg-yellow-50 p-2 rounded overflow-x-auto">{pendingFix.fix}</pre>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleApplyPendingFix}
+                              title="Apply fix"
+                              className="text-foreground hover:bg-background"
+                            >
+                              <Save size={14} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleDismissPendingFix}
+                              title="Dismiss fix"
+                              className="text-foreground hover:bg-background"
+                            >
+                              <X size={14} />
+                            </Button>
+                          </div>
+                        </div>
                       )}
                     </ScrollArea>
                   )}
@@ -567,4 +669,4 @@ export const WorkspacePanel: React.FC<WorkspacePanelProps> = ({ projectPath, onS
       )}
     </Card>
   );
-};
+});
