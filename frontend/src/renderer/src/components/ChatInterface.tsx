@@ -216,14 +216,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
                   >
                     {code}
                   </SyntaxHighlighter>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="absolute top-8 right-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={() => console.log("Apply code:", code)}
-                  >
-                    Apply
-                  </Button>
                 </div>
               );
             }
