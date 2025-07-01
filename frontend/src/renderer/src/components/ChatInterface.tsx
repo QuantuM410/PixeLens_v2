@@ -40,7 +40,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
     {
       id: "1",
       role: "assistant",
-      content: "Hello! I'm PixeLens, your UI debugging assistant. How can I help you today?",
+      content: "Hello! How can I help you?",
       timestamp: new Date(),
     },
   ]);
@@ -298,26 +298,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
               >
                 <CardContent className="p-0">
                   {renderMessageContent(message.content)}
-                  {message.role === "assistant" && (
-                    <div className="flex space-x-1 mt-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleFeedback(message.id, "thumbs-up")}
-                        className="hover:text-green-400"
-                      >
-                        <ThumbsUp size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleFeedback(message.id, "thumbs-down")}
-                        className="hover:text-destructive"
-                      >
-                        <ThumbsDown size={14} />
-                      </Button>
-                    </div>
-                  )}
+                  {message.role === "assistant" 
+                  // && (
+                  //   <div className="flex space-x-1 mt-2">
+                  //     <Button
+                  //       variant="ghost"
+                  //       size="icon"
+                  //       onClick={() => handleFeedback(message.id, "thumbs-up")}
+                  //       className="hover:text-green-400"
+                  //     >
+                  //       <ThumbsUp size={14} />
+                  //     </Button>
+                  //     <Button
+                  //       variant="ghost"
+                  //       size="icon"
+                  //       onClick={() => handleFeedback(message.id, "thumbs-down")}
+                  //       className="hover:text-red-400"
+                  //     >
+                  //       <ThumbsDown size={14} />
+                  //     </Button>
+                  //   </div>
+                  // )
+                  }
                 </CardContent>
               </Card>
             </div>
