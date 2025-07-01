@@ -237,8 +237,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatPanelHeight, s
 
   return (
     <Card
-      className={`flex flex-col relative border-t border-border ${isExpanded ? "fixed inset-0 z-50" : "h-full"} bg-background text-foreground rounded-none`}
-      style={{ height: isExpanded ? "100%" : `${chatPanelHeight}px` }}
+      className={`flex flex-col relative border-t border-border ${isExpanded ? "fixed top-4 left-4 right-4 z-50" : "h-full"} bg-background text-foreground rounded-none`}
+      style={{ height: isExpanded ? "calc(100vh - 2rem)" : `${chatPanelHeight}px` }}
     >
       {!isExpanded && (
         <div
