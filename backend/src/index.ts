@@ -16,45 +16,49 @@ const index = pinecone.Index('ui-ux-debugging-agent');
 
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
-    const embedder = await pipeline('feature-extraction', 'sentence-transformers/all-MiniLM-L6-v2');
-    
+    const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      revision: 'main', 
+      quantized: true,
+    });
+    console.log("generating")
     const result = await embedder(text, { pooling: 'mean', normalize: true });
     
     const embedding = Array.from(result.data as number[]);
-        
+    console.log("embedding", embedding)
     await embedder.dispose();
     
     return embedding;
   } catch (error) {
     console.error('Embedding generation error:', error);
-    throw new Error('Failed to generate embedding');
+    return new Array(384).fill(0);
   }
 }
 
-// --- Function to Query Pinecone ---
 async function queryPinecone(queryText: string, topK: number = 5): Promise<string> {
   try {
     const embedding = await generateEmbedding(queryText);
+    if (embedding.every(val => val === 0)) {
+      console.warn('Using fallback zero vector for Pinecone query');
+      return 'Embedding generation failed, using fallback context.';
+    }
     const queryResponse = await index.query({
       vector: embedding,
       topK,
       includeMetadata: true,
     });
 
-    // Filter high-quality matches (e.g., score > 0.8) and extract content
     const relevantContext = queryResponse.matches
-      .filter(match => match.score && match.score > 0.8)
+      .filter(match => match.score && match.score > 0.5)
       .map(match => match.metadata?.content || '')
       .filter(content => content)
       .join('\n\n');
-
+    console.log("Relevant Context")
     return relevantContext || 'No relevant context found.';
   } catch (error) {
     console.error('Pinecone query error:', error);
-    return ''; // Return empty string on error to avoid breaking the pipeline
+    return 'Error querying Pinecone database.';
   }
 }
-
 app.use(cors());
 app.use(express.json());
 
@@ -175,7 +179,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
 
   const queryText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n');
   const pineconeContext = await queryPinecone(queryText);
-
+  console.log("PINECONE CONTEXT", pineconeContext)
   const AGENT_ID = 'ag:269cb97d:20250701:da-dev:346fa19d';
   const BASE_MODEL = 'open-mistral-7b';
 
