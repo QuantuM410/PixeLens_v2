@@ -1,34 +1,53 @@
-# PixeLens_v2
+# **PixeLens**  
+*Enhancing UI/UX Debugging with Memory-Efficient RAG and LLM Integration*
 
-An Electron application with React and TypeScript
+---
+## **Architecture**
+Functionality Diagram
+![Overview](assets/func_diagram.png)
 
-## Project Setup
+LLM Architecture
+![Arch](assets/LLM-architecture.png)
 
-### Virtual env
 
+## **Performance Highlights**
+| **Metric** | **Result** |
+|--------|--------|
+| CodeBERT Similarity | 97.36% |
+| RAG Retrieval Precision (Top-5) | 89.98% |
+| LLM-as-a-Judge Score | 7.86 / 10 |
+| User Satisfaction | 8.3 / 10 |
+
+---
+
+## **Project Setup**
+
+### **1. Clone the Repository**
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+git clone https://github.com/br34dcrumb/PixeLens.git
+cd pixelens
 ```
 
-### Install dependencies
+### **2. Setup Python Virtual Environment**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
+### **3. Install NodeJS environment**
 ```bash
 pip install -r requirements.txt
-```
-
-### Install node environment
-
-```bash
 nodeenv -p --node=22.13.0
 ```
 
-**Note:**
-
-- You may need to activate virtual env again for the node environment to work initially.  
-
-### Install
-
+### **4. Run the frontend**
 ```bash
-npm install
+cd frontend/
+npm run dev
+```
+
+### **5. Start the backend (another terminal session)**
+```bash
+cd backend/
+npm run start
 ```
