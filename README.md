@@ -18,7 +18,11 @@ LLM Architecture
 | LLM-as-a-Judge Score | 7.86 / 10 |
 | User Satisfaction | 8.3 / 10 |
 
----
+## **Fine-tuning**
+The dataset for fine-tuning was made by *scraping stackoverflow issues* with specific tags (react.js, next.js, etc.). 
+- This dataset was then used to fine-tune the `open-mistral-7b` model on **Mistral Console**.
+- We also performed fine-tuning using *Axolotl* on a [Kaggle  notebook](https://www.kaggle.com/code/anikait05/mistral-finetuning-axolotl) with **GPU T4 x2** accelerator and pushed the model to [HuggingFace Repository](https://huggingface.co/anikait-colab/mistral-7B-ui-ux-finetuned).
+
 
 ## **Project Setup**
 
